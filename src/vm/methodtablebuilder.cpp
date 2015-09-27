@@ -1506,7 +1506,7 @@ MethodTableBuilder::BuildMethodTableThrowing(
     // the System.Enum MethodTable is unset, then we must be building System.Enum and
     // so we don't mark it as a ValueType.
     if(HasParent() &&
-       ((g_pEnumClass != NULL && GetParentMethodTable() == g_pValueTypeClass) ||
+       ((g_pEnumClass != NULL && (GetParentMethodTable() == g_pValueTypeClass || GetParentMethodTable()->IsValueType())) ||
         GetParentMethodTable() == g_pEnumClass))
     {
         bmtProp->fIsValueClass = true;
@@ -13094,8 +13094,7 @@ ClassLoader::CreateTypeHandleForTypeDefThrowing(
         // Value types and enums should be sealed - disable inheritting from them (we cannot require sealed 
         // flag because of AppCompat)
         if (pParentMethodTable->IsSealed() || 
-            (pParentMethodTable == g_pArrayClass) || 
-            pParentMethodTable->IsValueType())
+            (pParentMethodTable == g_pArrayClass))
         {
             pAssembly->ThrowTypeLoadException(pInternalImport, cl, IDS_CLASSLOAD_SEALEDPARENT);
         }
