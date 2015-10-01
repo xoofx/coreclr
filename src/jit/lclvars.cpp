@@ -1733,7 +1733,18 @@ void   Compiler::lvaSetStruct(unsigned varNum, CORINFO_CLASS_HANDLE typeHnd, boo
     if (setTypeInfo)
         varDsc->lvVerTypeInfo = typeInfo(TI_STRUCT, typeHnd);
 
-    varDsc->lvExactSize = info.compCompHnd->getClassSize(typeHnd);
+	// ClassAsValue: If this is a reference type used as a valuetype, get the full size of the type (including the method table and minimum size)
+	varDsc->lvIsReferenceType = !info.compCompHnd->isValueClass(typeHnd);
+	if (varDsc->lvIsReferenceType)
+	{
+		// Grab reference of method table here, as we are going to use it later for codegen in method to store the actual methodtable pointer
+		varDsc->lvReferenceTypeMethodTable = info.compCompHnd->getMethodTable(typeHnd);
+		varDsc->lvExactSize = info.compCompHnd->getBaseSize(typeHnd);
+	}
+	else
+	{
+		varDsc->lvExactSize = info.compCompHnd->getClassSize(typeHnd);
+	}
 
     size_t lvSize = varDsc->lvSize();
     assert((lvSize % sizeof(void*)) == 0); // The struct needs to be a multiple of sizeof(void*) bytes for getClassGClayout() to be valid.

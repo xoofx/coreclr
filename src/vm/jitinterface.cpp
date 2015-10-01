@@ -2550,7 +2550,9 @@ unsigned CEEInfo::getClassGClayout (CORINFO_CLASS_HANDLE clsHnd, BYTE* gcPtrs)
     }
     else
     {
-        _ASSERTE(pMT->IsValueType());
+		// ClassAsValue: Disable check for valuetype, as we are going to allow them on the stack
+		// TODO: Check that the following code return all (inherited) fields even for a class and not only for a valuetype.
+        //_ASSERTE(pMT->IsValueType());
         _ASSERTE(sizeof(BYTE) == 1);
 
         // assume no GC pointers at first
