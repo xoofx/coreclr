@@ -269,6 +269,7 @@ public:
     unsigned char       lvOverlappingFields :1;  // True when we have a struct with possibly overlapping fields
     unsigned char       lvContainsHoles     :1;  // True when we have a promoted struct that contains holes
     unsigned char       lvCustomLayout      :1;  // True when this struct has "CustomLayout"
+	unsigned char       lvIsReferenceType : 1;  // True when the local variable is actually an allocation of a reference type on the stack
 #ifdef _TARGET_ARM_
     unsigned char       lvDontPromote:1;        // Should struct promoter consider this variable for promotion?
     unsigned char       lvIsHfaRegArg:1;        // Is this argument variable holding a HFA register argument.
@@ -392,6 +393,10 @@ public:
         assert(_lvArgReg == reg);
     }
 
+	bool IsReferenceType() const
+	{
+		return lvIsReferenceType;
+	}
 #ifdef FEATURE_SIMD
     // Is this is a SIMD struct?
     bool lvIsSIMDType() const
@@ -507,6 +512,7 @@ public:
     unsigned            lvRefCntWtd;    // weighted reference count
     int                 lvStkOffs;      // stack offset of home
     unsigned            lvExactSize;    // (exact) size of the type in bytes
+	void*               lvReferenceTypeMethodTable; // MethodTable for a struct allocated on the stack
 
     // Is this a promoted struct?
     // This method returns true only for structs (including SIMD structs), not for
