@@ -4897,6 +4897,15 @@ void Compiler::lvaAssignVirtualFrameOffsetsToLocals()
 
             // Reserve the stack space for this variable
             stkOffs = lvaAllocLocalAndSetVirtualOffset(lclNum, lvaLclSize(lclNum), stkOffs);
+
+			// ClassAsValue: If we have a reference type allocated on the stack, add a bit 
+			// more space for the object header
+			// TODO: we should calculate the real space of the object header (OBJHEADER)
+			if (lvaTable[lclNum].lvType == TYP_STRUCT && lvaTable[lclNum].IsReferenceType())
+			{
+				lvaIncrementFrameSize(TARGET_POINTER_SIZE);
+				stkOffs -= TARGET_POINTER_SIZE;
+			}
         }
     }
 

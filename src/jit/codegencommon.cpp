@@ -6466,6 +6466,28 @@ void        CodeGen::genZeroInitFrame(int        untrLclHi,
             }
         }
     }
+
+	// ClassAsValue: Generates the proper code to setup the methodtable on all local variable that are declared as class used as valuetype.
+	LclVarDsc* varDsc;
+	unsigned i;
+	for (i = 0, varDsc = compiler->lvaTable; i < compiler->lvaCount; i++, varDsc++)
+	{
+		// Initialize method table
+		if (varDsc->lvType == TYP_STRUCT && varDsc->IsReferenceType())
+		{
+			// We are going to use the init register to load the address of the MethodTable
+			*pInitRegZeroed = false;
+			/* lea eax, [MethodTable]*/
+			getEmitter()->emitIns_R_AI(INS_lea, EA_PTRSIZE, initReg, (ssize_t)(varDsc->lvReferenceTypeMethodTable));
+
+			/* mov [ebp - stackoffs], eax */
+			getEmitter()->emitIns_AR_R(ins_Store(TYP_I_IMPL),
+				EA_PTRSIZE,
+				initReg,
+				genFramePointerReg(),
+				varDsc->lvStkOffs);
+		}
+	}
 }
 
 
