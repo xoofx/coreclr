@@ -1528,13 +1528,14 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                 
                     if (typFromSigIsClass != typLoadedIsClass)
                     {
-                        if((pModule->GetMDImport()->GetMetadataStreamVersion() != MD_STREAM_VER_1X)
-                            || !Security::CanSkipVerification(pModule->GetDomainAssembly()))
-                        {
-                                pOrigModule->GetAssembly()->ThrowTypeLoadException(pModule->GetMDImport(),
-                                                                                   typeToken, 
-                                                                                   BFA_CLASSLOAD_VALUETYPEMISMATCH);
-                        }
+						// ClassAsValue: Disable this for now, as we are allowing class as value
+                        //if((pModule->GetMDImport()->GetMetadataStreamVersion() != MD_STREAM_VER_1X)
+                        //    || !Security::CanSkipVerification(pModule->GetDomainAssembly()))
+                        //{
+                        //        pOrigModule->GetAssembly()->ThrowTypeLoadException(pModule->GetMDImport(),
+                        //                                                           typeToken, 
+                        //                                                           BFA_CLASSLOAD_VALUETYPEMISMATCH);
+                        //}
                     }
                 }
 
