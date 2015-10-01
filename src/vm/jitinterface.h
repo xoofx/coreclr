@@ -475,6 +475,10 @@ public:
                                   BOOL fFullInst,
                                   BOOL fAssembly);
     BOOL isValueClass (CORINFO_CLASS_HANDLE cls);
+
+	// Returns the method handle for a class as an opaque pointer
+	void* getMethodTable(CORINFO_CLASS_HANDLE classHnd);
+
     BOOL canInlineTypeCheckWithObjectVTable (CORINFO_CLASS_HANDLE cls);
 
     DWORD getClassAttribs (CORINFO_CLASS_HANDLE cls);
@@ -484,7 +488,8 @@ public:
 
     BOOL isStructRequiringStackAllocRetBuf(CORINFO_CLASS_HANDLE cls);
 
-    unsigned getClassSize (CORINFO_CLASS_HANDLE cls);
+	unsigned getBaseSize(CORINFO_CLASS_HANDLE cls);
+	unsigned getClassSize (CORINFO_CLASS_HANDLE cls);
     unsigned getClassAlignmentRequirement(CORINFO_CLASS_HANDLE cls, BOOL fDoubleAlignHint);
     static unsigned getClassAlignmentRequirementStatic(TypeHandle clsHnd);
 

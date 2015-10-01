@@ -571,7 +571,8 @@ public:
                                   BOOL fFullInst,
                                   BOOL fAssembly);
     BOOL isValueClass(CORINFO_CLASS_HANDLE clsHnd);
-    BOOL canInlineTypeCheckWithObjectVTable(CORINFO_CLASS_HANDLE clsHnd);
+	void* getMethodTable(CORINFO_CLASS_HANDLE cls);
+	BOOL canInlineTypeCheckWithObjectVTable(CORINFO_CLASS_HANDLE clsHnd);
     DWORD getClassAttribs(CORINFO_CLASS_HANDLE cls);
     BOOL isStructRequiringStackAllocRetBuf(CORINFO_CLASS_HANDLE cls);
     CORINFO_MODULE_HANDLE getClassModule(CORINFO_CLASS_HANDLE cls);
@@ -581,7 +582,8 @@ public:
     void LongLifetimeFree(void* obj);
     size_t getClassModuleIdForStatics(CORINFO_CLASS_HANDLE cls, CORINFO_MODULE_HANDLE *pModule, void **ppIndirection);
 
-    unsigned getClassSize(CORINFO_CLASS_HANDLE cls);
+	unsigned getBaseSize(CORINFO_CLASS_HANDLE cls);
+	unsigned getClassSize(CORINFO_CLASS_HANDLE cls);
     unsigned getClassAlignmentRequirement(CORINFO_CLASS_HANDLE cls, BOOL fDoubleAlignHint);
 
     CORINFO_FIELD_HANDLE getFieldInClass(CORINFO_CLASS_HANDLE clsHnd, INT num);

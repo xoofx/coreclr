@@ -2290,6 +2290,29 @@ CEEInfo::findSig(
 
 //---------------------------------------------------------------------------------------
 // 
+unsigned
+CEEInfo::getBaseSize(
+	CORINFO_CLASS_HANDLE clsHnd)
+{
+	CONTRACTL{
+		SO_TOLERANT;
+	NOTHROW;
+	GC_NOTRIGGER;
+	MODE_PREEMPTIVE;
+	} CONTRACTL_END;
+
+	unsigned result = 0;
+
+	JIT_TO_EE_TRANSITION_LEAF();
+
+	TypeHandle VMClsHnd(clsHnd);
+	result = VMClsHnd.GetMethodTable()->GetBaseSize();
+
+	EE_TO_JIT_TRANSITION_LEAF();
+
+	return result;
+}
+
 unsigned 
 CEEInfo::getClassSize(
     CORINFO_CLASS_HANDLE clsHnd)
@@ -8916,6 +8939,17 @@ CONTRACTL {
     EE_TO_JIT_TRANSITION_LEAF();
 
     return result;
+}
+
+void* CEEInfo::getMethodTable(CORINFO_CLASS_HANDLE classHnd)
+{
+	JIT_TO_EE_TRANSITION_LEAF();
+
+	TypeHandle VMClsHnd(classHnd);
+	void* pMethodTable = VMClsHnd.GetMethodTable();
+	EE_TO_JIT_TRANSITION_LEAF();
+
+	return pMethodTable;
 }
 
 /*********************************************************************/

@@ -2866,7 +2866,10 @@ public:
     // Quick check whether the type is a value class. Returns the same value as getClassAttribs(cls) & CORINFO_FLG_VALUECLASS, except faster.
     virtual BOOL isValueClass(CORINFO_CLASS_HANDLE cls) = 0;
 
-    // If this method returns true, JIT will do optimization to inline the check for
+	// getMethodTable
+	virtual void* getMethodTable(CORINFO_CLASS_HANDLE cls) = 0;
+	
+	// If this method returns true, JIT will do optimization to inline the check for
     //     GetTypeFromHandle(handle) == obj.GetType()
     virtual BOOL canInlineTypeCheckWithObjectVTable(CORINFO_CLASS_HANDLE cls) = 0;
 
@@ -2909,6 +2912,10 @@ public:
             CORINFO_MODULE_HANDLE *pModule, 
             void **ppIndirection
             ) = 0;
+
+	virtual unsigned getBaseSize(
+		CORINFO_CLASS_HANDLE        cls
+		) = 0;
 
     // return the number of bytes needed by an instance of the class
     virtual unsigned getClassSize (

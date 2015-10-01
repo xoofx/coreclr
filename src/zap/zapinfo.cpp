@@ -3822,6 +3822,12 @@ BOOL ZapInfo::isValueClass(CORINFO_CLASS_HANDLE cls)
     return m_pEEJitInfo->isValueClass(cls);
 }
 
+void* ZapInfo::getMethodTable(CORINFO_CLASS_HANDLE cls)
+{
+	return m_pEEJitInfo->getMethodTable(cls);
+}
+
+
 BOOL ZapInfo::canInlineTypeCheckWithObjectVTable (CORINFO_CLASS_HANDLE cls)
 {
 #ifdef MDIL
@@ -4163,6 +4169,27 @@ size_t ZapInfo::getClassModuleIdForStatics(CORINFO_CLASS_HANDLE cls, CORINFO_MOD
 
     *ppIndirection = pImport;
     return NULL;
+}
+
+
+unsigned ZapInfo::getBaseSize(CORINFO_CLASS_HANDLE cls)
+{
+	DWORD size = m_pEEJitInfo->getBaseSize(cls);
+
+#ifdef FEATURE_READYTORUN_COMPILER
+	if (IsReadyToRunCompilation())
+	{
+		if (m_pEECompileInfo->NeedsTypeLayoutCheck(cls))
+		{
+			ZapImport * pImport = m_pImage->GetImportTable()->GetCheckTypeLayoutImport(cls);
+			AppendImport(pImport);
+
+			m_ClassLoadTable.Load(cls, TRUE);
+		}
+	}
+#endif
+
+	return size;
 }
 
 unsigned ZapInfo::getClassSize(CORINFO_CLASS_HANDLE cls)
