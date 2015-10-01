@@ -1487,9 +1487,10 @@ void                GenTree::ChangeOperUnchecked(genTreeOps oper)
 inline
 bool                GenTree::IsVarAddr() const
 {
-    if (gtOper == GT_ADDR && (gtFlags & GTF_ADDR_ONSTACK))
+	// ClassAsValue: If we are loading the address of class used as a valuetype, this is not considered as a VarAddr (TYP_BYREF or TYP_I_IMPL)
+    if (gtOper == GT_ADDR && (gtFlags & GTF_ADDR_ONSTACK) && gtType != TYP_REF)
     {
-        assert((gtType == TYP_BYREF) || (gtType == TYP_I_IMPL));
+		assert((gtType == TYP_BYREF) || (gtType == TYP_I_IMPL)); 
         return true;
     }
     return false;

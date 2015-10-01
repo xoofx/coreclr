@@ -9017,7 +9017,8 @@ _PUSH_ADRVAR:
                Thus we are pessimistic and may report byrefs in the GC info
                where it was not absolutely needed, but it is safer this way.
              */
-            op1 = gtNewOperNode(GT_ADDR, TYP_BYREF, op1);
+			// ClassAsValue: If we are loading the address of class used as a valuetype, we force the type of reference to be TYP_REF and not the default TYP_BYREF
+			op1 = gtNewOperNode(GT_ADDR, lvaGetActualType(lclNum) == TYP_STRUCT && lvaTable[lclNum].IsReferenceType() ? TYP_REF : TYP_BYREF, op1);
 
             // &aliasedVar doesnt need GTF_GLOB_REF, though alisasedVar does
             assert((op1->gtFlags & GTF_GLOB_REF) == 0);
