@@ -1194,10 +1194,17 @@ class ObjHeader
         return m_SyncBlockValue.LoadWithoutBarrier();
     }
 
-	// returns extra bits
+	// ClassAsValue: returns extra bits
 	DWORD GetExtraBits()
 	{
 		return m_extraGCBits;
+	}
+
+	// ClassAsValue: returns true if the object is embedded or allocated on the stack
+	bool IsStackOrEmbedAlloc() const
+	{
+		// ClassAsValue: TODO: Check this more precisely
+		return m_extraGCBits != 0;
 	}
 
     DWORD SetBits(DWORD newBits, DWORD oldBits)
