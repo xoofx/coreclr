@@ -3647,18 +3647,3 @@ void SyncBlock::SetEnCInfo(EnCSyncBlockInfo *pEnCInfo)
 }
 #endif // EnC_SUPPORTED
 #endif // !DACCESS_COMPILE
-
-#if defined(_WIN64) && defined(_DEBUG)
-void ObjHeader::IllegalAlignPad()
-{
-    WRAPPER_NO_CONTRACT;
-#ifdef LOGGING
-    void** object = ((void**) this) + 1;
-    LogSpewAlways("\n\n******** Illegal ObjHeader m_alignpad not 0, object" FMT_ADDR "\n\n",
-                  DBG_ADDR(object));
-#endif
-    _ASSERTE(m_alignpad == 0);
-}
-#endif // _WIN64 && _DEBUG
-
-

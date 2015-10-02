@@ -79,13 +79,13 @@ class EnCSyncBlockInfo;
 typedef DPTR(EnCSyncBlockInfo) PTR_EnCSyncBlockInfo;
 
 #endif // EnC_SUPPORTED
+#include "objheader_common.h"
 
 #include "eventstore.hpp"
 
 #include "eventstore.hpp"
 
 #include "synch.h"
-
 
 // At a negative offset from each Object is an ObjHeader.  The 'size' of the
 // object includes these bytes.  However, we rely on the previous object allocation
@@ -148,15 +148,6 @@ typedef DPTR(EnCSyncBlockInfo) PTR_EnCSyncBlockInfo;
 
 // Spin for about 1000 cycles before waiting longer.
 #define     BIT_SBLK_SPIN_COUNT         1000
-
-// The GC is highly dependent on SIZE_OF_OBJHEADER being exactly the sizeof(ObjHeader)
-// We define this macro so that the preprocessor can calculate padding structures.
-#ifdef _WIN64
-#define SIZEOF_OBJHEADER    8
-#else // !_WIN64
-#define SIZEOF_OBJHEADER    4
-#endif // !_WIN64
- 
 
 inline void InitializeSpinConstants()
 {
@@ -1069,16 +1060,10 @@ class ObjHeader
     friend class CheckAsmOffsets;
 
   private:
-    // !!! Notice: m_SyncBlockValue *MUST* be the last field in ObjHeader.
-#ifdef _WIN64
-    DWORD    m_alignpad;
-#endif // _WIN64
-
-    Volatile<DWORD> m_SyncBlockValue;      // the Index and the Bits
-
-#if defined(_WIN64) && defined(_DEBUG)
-    void IllegalAlignPad();
-#endif // _WIN64 && _DEBUG
+	// ClassAsValue: bits to store ClassAsValue information (allocated on the stack or embed object, reference to parent...)
+    DWORD    m_extraGCBits;
+	// !!! Notice: m_SyncBlockValue *MUST* be the last field in ObjHeader.
+	Volatile<DWORD> m_SyncBlockValue;      // the Index and the Bits
 
     INCONTRACT(void * GetPtrForLockContract());
 
@@ -1088,12 +1073,6 @@ class ObjHeader
     FORCEINLINE DWORD GetHeaderSyncBlockIndex()
     {
         LIMITED_METHOD_DAC_CONTRACT;
-#if defined(_WIN64) && defined(_DEBUG) && !defined(DACCESS_COMPILE)
-        // On WIN64 this field is never modified, but was initialized to 0
-        if (m_alignpad != 0)
-            IllegalAlignPad();
-#endif // _WIN64 && _DEBUG && !DACCESS_COMPILE
-
         // pull the value out before checking it to avoid race condition
         DWORD value = m_SyncBlockValue.LoadWithoutBarrier();
         if ((value & (BIT_SBLK_IS_HASH_OR_SYNCBLKINDEX | BIT_SBLK_IS_HASHCODE)) != BIT_SBLK_IS_HASH_OR_SYNCBLKINDEX)
@@ -1212,16 +1191,14 @@ class ObjHeader
     {
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
-
-#if defined(_WIN64) && defined(_DEBUG) && !defined(DACCESS_COMPILE)
-        // On WIN64 this field is never modified, but was initialized to 0
-        if (m_alignpad != 0)
-            IllegalAlignPad();
-#endif // _WIN64 && _DEBUG && !DACCESS_COMPILE
-
         return m_SyncBlockValue.LoadWithoutBarrier();
     }
 
+	// returns extra bits
+	DWORD GetExtraBits()
+	{
+		return m_extraGCBits;
+	}
 
     DWORD SetBits(DWORD newBits, DWORD oldBits)
     {

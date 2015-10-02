@@ -280,10 +280,10 @@ class Object
 
     // Access the ObjHeader which is at a negative offset on the object (because of
     // cache lines)
-    PTR_ObjHeader   GetHeader()
+    PTR_ObjHeader   GetHeader() const
     {
         LIMITED_METHOD_DAC_CONTRACT;
-        return dac_cast<PTR_ObjHeader>(this) - 1;
+        return dac_cast<PTR_ObjHeader>((char*)this - sizeof(ObjHeader));
     }
 
     // Get the current address of the object (works for debug refs, too.)

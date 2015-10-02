@@ -102,11 +102,8 @@
 //The large object heap uses a different alignment
 #define ALIGNCONSTLARGE 7
 
-#ifdef _WIN64
+// ClassAsValue: We use now 8 bytes for the object header by default
 #define SIZEOF_OBJHEADER    8
-#else // !_WIN64
-#define SIZEOF_OBJHEADER    4
-#endif // !_WIN64
 
 #define plug_skew           SIZEOF_OBJHEADER
 #define min_obj_size        (sizeof(BYTE*)+plug_skew+sizeof(size_t))

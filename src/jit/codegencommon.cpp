@@ -22,6 +22,7 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #endif
 #include "codegen.h"
 
+#include "objheader_common.h"
 #include "gcinfo.h"
 #include "emit.h"
 
@@ -6479,6 +6480,9 @@ void        CodeGen::genZeroInitFrame(int        untrLclHi,
 			*pInitRegZeroed = false;
 			/* lea eax, [MethodTable]*/
 			getEmitter()->emitIns_R_AI(INS_lea, EA_PTRSIZE, initReg, (ssize_t)(varDsc->lvReferenceTypeMethodTable));
+
+			/* mov DWORD [ebp - stackoffs - sizeof(ObjHeader)], 1 */
+			getEmitter()->emitIns_I_ARR(INS_mov, EA_4BYTE, BIT_OBJHEADER_STACK_ALLOCATED, genFramePointerReg(), REG_NA, varDsc->lvStkOffs - SIZEOF_OBJHEADER);
 
 			/* mov [ebp - stackoffs], eax */
 			getEmitter()->emitIns_AR_R(ins_Store(TYP_I_IMPL),
