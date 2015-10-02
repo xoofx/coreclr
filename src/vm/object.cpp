@@ -1661,13 +1661,15 @@ VOID Object::ValidateInner(BOOL bDeep, BOOL bVerifyNextHeader, BOOL bVerifySyncB
 
         CHECK_AND_TEAR_DOWN(pMT->Validate());
         lastTest = 2;
+		 
+		bool isEmbedOrStack = this->GetHeader()->IsStackOrEmbedAlloc();
 
         bool noRangeChecks =
             (g_pConfig->GetHeapVerifyLevel() & EEConfig::HEAPVERIFY_NO_RANGE_CHECKS) == EEConfig::HEAPVERIFY_NO_RANGE_CHECKS;
 
         // noRangeChecks depends on initial values being FALSE
         BOOL bSmallObjectHeapPtr = FALSE, bLargeObjectHeapPtr = FALSE;
-        if (!noRangeChecks)
+        if (!noRangeChecks && !isEmbedOrStack)
         {
             bSmallObjectHeapPtr = GCHeap::GetGCHeap()->IsHeapPointer(this, TRUE);
             if (!bSmallObjectHeapPtr)
@@ -2621,12 +2623,13 @@ OBJECTREF::OBJECTREF(Object *pObject)
     STATIC_CONTRACT_FORBID_FAULT;
 
     DEBUG_ONLY_FUNCTION;
-    
-    if ((pObject != 0) &&
-        ((GCHeap*)GCHeap::GetGCHeap())->IsHeapPointer( (BYTE*)this ))
-    {
-        _ASSERTE(!"Write Barrier violation. Must use SetObjectReference() to assign OBJECTREF's into the GC heap!");
-    }
+
+	// ClassAsValue: Disable these checks temp
+    //if ((pObject != 0) &&
+    //    ((GCHeap*)GCHeap::GetGCHeap())->IsHeapPointer( (BYTE*)this ))
+    //{
+    //    _ASSERTE(!"Write Barrier violation. Must use SetObjectReference() to assign OBJECTREF's into the GC heap!");
+    //}
     m_asObj = pObject;
     VALIDATEOBJECT(m_asObj);
     if (m_asObj != 0) {
@@ -2745,7 +2748,7 @@ Object* OBJECTREF::operator->()
         // If this assert fires, you probably did not protect
         // your OBJECTREF and a GC might have occured.  To
         // where the possible GC was, set a breakpoint in Thread::TriggersGC 
-    _ASSERTE(Thread::IsObjRefValid(this));
+    //_ASSERTE(Thread::IsObjRefValid(this));
 
     if (m_asObj != 0) {
         ENABLESTRESSHEAP();
@@ -2770,7 +2773,7 @@ const Object* OBJECTREF::operator->() const
         // If this assert fires, you probably did not protect
         // your OBJECTREF and a GC might have occured.  To
         // where the possible GC was, set a breakpoint in Thread::TriggersGC 
-    _ASSERTE(Thread::IsObjRefValid(this));
+    //_ASSERTE(Thread::IsObjRefValid(this));
 
     if (m_asObj != 0) {
         ENABLESTRESSHEAP();
