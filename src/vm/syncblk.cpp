@@ -2453,10 +2453,18 @@ BOOL ObjHeader::Validate (BOOL bVerifySyncBlkIndex)
     STATIC_CONTRACT_GC_NOTRIGGER;
     STATIC_CONTRACT_SO_TOLERANT;
     STATIC_CONTRACT_MODE_COOPERATIVE;
-    
+   
     DWORD bits = GetBits ();
     Object * obj = GetBaseObject ();
     BOOL bVerifyMore = g_pConfig->GetHeapVerifyLevel() & EEConfig::HEAPVERIFY_SYNCBLK;
+
+	DWORD extraGCBits = GetExtraBits();
+	if (extraGCBits)
+	{
+		ASSERT_AND_CHECK(bits == 0);
+		return TRUE;
+	}
+
     //the highest 2 bits have reloaded meaning
     //for string objects:
     //         BIT_SBLK_STRING_HAS_NO_HIGH_CHARS   0x80000000
