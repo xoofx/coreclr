@@ -2556,9 +2556,17 @@ unsigned CEEInfo::getClassGClayout (CORINFO_CLASS_HANDLE clsHnd, BYTE* gcPtrs)
         _ASSERTE(sizeof(BYTE) == 1);
 
         // assume no GC pointers at first
+		unsigned int sizeOfValueType = VMClsHnd.GetSize();
+
+		// ClassAsValue: In case of a class allocated on the stack, get the actual size of the class, not the size of the ref
+		if (!pMT->IsValueType())
+		{
+			sizeOfValueType = pMT->GetBaseSize();
+		}
+
         result = 0;
         memset(gcPtrs, TYPE_GC_NONE,
-               (VMClsHnd.GetSize() + sizeof(void*) -1)/ sizeof(void*));
+               (sizeOfValueType + sizeof(void*) -1)/ sizeof(void*));
 
         // walk the GC descriptors, turning on the correct bits
         if (pMT->ContainsPointers())
