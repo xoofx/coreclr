@@ -33291,6 +33291,14 @@ void GCHeap::Promote(Object** ppObject, ScanContext* sc, DWORD flags)
         return;
 #endif //DEBUG_DestroyedHandleValue
 
+	// ClassAsValue: In case of a Stack alloc, we don't follow the pointer
+	// TODO: In case of embed alloc, we should follow the root object
+	ObjHeader* header = (*ppObject)->GetHeader();
+	if (header->IsStackOrEmbedAlloc())
+	{
+		return;
+	}
+
     HEAP_FROM_THREAD;
 
     gc_heap* hp = gc_heap::heap_of (o);
@@ -33369,6 +33377,14 @@ void GCHeap::Relocate (Object** ppObject, ScanContext* sc,
     
     if (object == 0)
         return;
+
+	// ClassAsValue: In case of a Stack alloc, we don't follow the pointer
+	// TODO: In case of embed alloc, we should follow the root object
+	ObjHeader* header = (*ppObject)->GetHeader();
+	if (header->IsStackOrEmbedAlloc())
+	{
+		return;
+	}
 
     gc_heap* hp = gc_heap::heap_of (object);
 
