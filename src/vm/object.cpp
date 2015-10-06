@@ -1662,85 +1662,90 @@ VOID Object::ValidateInner(BOOL bDeep, BOOL bVerifyNextHeader, BOOL bVerifySyncB
         CHECK_AND_TEAR_DOWN(pMT->Validate());
         lastTest = 2;
 		 
+		// ClassAsValue: Temp. Bypass validation for object allocated on the stack.
+		// While some maybe relevant, things like "try to validate next object's header" will not work well with object allocated on the stack
+		// So we simply skip for now.
 		bool isEmbedOrStack = this->GetHeader()->IsStackOrEmbedAlloc();
+		if (!isEmbedOrStack)
+		{
+			bool noRangeChecks =
+				(g_pConfig->GetHeapVerifyLevel() & EEConfig::HEAPVERIFY_NO_RANGE_CHECKS) == EEConfig::HEAPVERIFY_NO_RANGE_CHECKS;
 
-        bool noRangeChecks =
-            (g_pConfig->GetHeapVerifyLevel() & EEConfig::HEAPVERIFY_NO_RANGE_CHECKS) == EEConfig::HEAPVERIFY_NO_RANGE_CHECKS;
+			// noRangeChecks depends on initial values being FALSE
+			BOOL bSmallObjectHeapPtr = FALSE, bLargeObjectHeapPtr = FALSE;
+			if (!noRangeChecks)
+			{
+				bSmallObjectHeapPtr = GCHeap::GetGCHeap()->IsHeapPointer(this, TRUE);
+				if (!bSmallObjectHeapPtr)
+					bLargeObjectHeapPtr = GCHeap::GetGCHeap()->IsHeapPointer(this);
 
-        // noRangeChecks depends on initial values being FALSE
-        BOOL bSmallObjectHeapPtr = FALSE, bLargeObjectHeapPtr = FALSE;
-        if (!noRangeChecks && !isEmbedOrStack)
-        {
-            bSmallObjectHeapPtr = GCHeap::GetGCHeap()->IsHeapPointer(this, TRUE);
-            if (!bSmallObjectHeapPtr)
-                bLargeObjectHeapPtr = GCHeap::GetGCHeap()->IsHeapPointer(this);
-                
-            CHECK_AND_TEAR_DOWN(bSmallObjectHeapPtr || bLargeObjectHeapPtr);
-        }
+				CHECK_AND_TEAR_DOWN(bSmallObjectHeapPtr || bLargeObjectHeapPtr);
+			}
 
-        lastTest = 3;
+			lastTest = 3;
 
-        if (bDeep)
-        {
-            CHECK_AND_TEAR_DOWN(GetHeader()->Validate(bVerifySyncBlock));
-        }
-        
-        lastTest = 4;
+			if (bDeep)
+			{
+				CHECK_AND_TEAR_DOWN(GetHeader()->Validate(bVerifySyncBlock));
+			}
 
-        if (bDeep && (g_pConfig->GetHeapVerifyLevel() & EEConfig::HEAPVERIFY_GC)) {
-            GCHeap::GetGCHeap()->ValidateObjectMember(this);
-        }
+			lastTest = 4;
 
-        lastTest = 5;
+			if (bDeep && (g_pConfig->GetHeapVerifyLevel() & EEConfig::HEAPVERIFY_GC)) {
+				GCHeap::GetGCHeap()->ValidateObjectMember(this);
+			}
 
-        // since bSmallObjectHeapPtr is initialized to FALSE
-        // we skip checking noRangeChecks since if skipping
-        // is enabled bSmallObjectHeapPtr will always be false.
-        if (bSmallObjectHeapPtr) {
-            CHECK_AND_TEAR_DOWN(!GCHeap::GetGCHeap()->IsObjectInFixedHeap(this));
-        }
+			lastTest = 5;
 
-        lastTest = 6;
+			// since bSmallObjectHeapPtr is initialized to FALSE
+			// we skip checking noRangeChecks since if skipping
+			// is enabled bSmallObjectHeapPtr will always be false.
+			if (bSmallObjectHeapPtr) {
+				CHECK_AND_TEAR_DOWN(!GCHeap::GetGCHeap()->IsObjectInFixedHeap(this));
+			}
+
+			lastTest = 6;
 
 #if CHECK_APP_DOMAIN_LEAKS
-        // when it's not safe to verify the fields, it's not safe to verify AppDomain either
-        // because the process might try to access fields.
-        if (bDeep && g_pConfig->AppDomainLeaks())
-        {
-            //
-            // Check to see that our domain is valid.  This will assert if it has been unloaded.
-            //
-            SCAN_IGNORE_FAULT;
-            GetAppDomain();
-        }        
+			// when it's not safe to verify the fields, it's not safe to verify AppDomain either
+			// because the process might try to access fields.
+			if (bDeep && g_pConfig->AppDomainLeaks())
+			{
+				//
+				// Check to see that our domain is valid.  This will assert if it has been unloaded.
+				//
+				SCAN_IGNORE_FAULT;
+				GetAppDomain();
+			}
 #endif
 
-        lastTest = 7;
+			lastTest = 7;
 
-        // try to validate next object's header
-        if (bDeep 
-            && bVerifyNextHeader 
-            && CNameSpace::GetGcRuntimeStructuresValid ()
-            //NextObj could be very slow if concurrent GC is going on
-            && !(GCHeap::IsGCHeapInitialized() && GCHeap::GetGCHeap ()->IsConcurrentGCInProgress ()))
-        {
-            Object * nextObj = GCHeap::GetGCHeap ()->NextObj (this);
-            if ((nextObj != NULL) &&
-                (nextObj->GetGCSafeMethodTable() != g_pFreeObjectMethodTable))
-            {
-                CHECK_AND_TEAR_DOWN(nextObj->GetHeader()->Validate(FALSE));
-            }
-        }
+			// try to validate next object's header
+			if (bDeep
+				&& bVerifyNextHeader
+				&& CNameSpace::GetGcRuntimeStructuresValid()
+				//NextObj could be very slow if concurrent GC is going on
+				&& !(GCHeap::IsGCHeapInitialized() && GCHeap::GetGCHeap()->IsConcurrentGCInProgress()))
+			{
+				Object * nextObj = GCHeap::GetGCHeap()->NextObj(this);
+				if ((nextObj != NULL) &&
+					(nextObj->GetGCSafeMethodTable() != g_pFreeObjectMethodTable))
+				{
+					CHECK_AND_TEAR_DOWN(nextObj->GetHeader()->Validate(FALSE));
+				}
+			}
 
-        lastTest = 8;
+			lastTest = 8;
 
 #ifdef FEATURE_64BIT_ALIGNMENT
-        if (pMT->RequiresAlign8())
-        {
-            CHECK_AND_TEAR_DOWN((((size_t)this) & 0x7) == (pMT->IsValueType()? 4:0));
-        }
-        lastTest = 9;
+			if (pMT->RequiresAlign8())
+			{
+				CHECK_AND_TEAR_DOWN((((size_t)this) & 0x7) == (pMT->IsValueType() ? 4 : 0));
+			}
+			lastTest = 9;
 #endif // FEATURE_64BIT_ALIGNMENT
+		}
 
     }
     EX_CATCH
