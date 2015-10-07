@@ -2558,10 +2558,12 @@ unsigned CEEInfo::getClassGClayout (CORINFO_CLASS_HANDLE clsHnd, BYTE* gcPtrs)
         // assume no GC pointers at first
 		unsigned int sizeOfValueType = VMClsHnd.GetSize();
 
+		size_t methodTableOffset = 0;
 		// ClassAsValue: In case of a class allocated on the stack, get the actual size of the class, not the size of the ref
 		if (!pMT->IsValueType())
 		{
 			sizeOfValueType = pMT->GetBaseSize();
+			methodTableOffset += sizeof(void*);
 		}
 
         result = 0;
@@ -2578,7 +2580,7 @@ unsigned CEEInfo::getClassGClayout (CORINFO_CLASS_HANDLE clsHnd, BYTE* gcPtrs)
             {
                 // Get offset into the value class of the first pointer field (includes a +Object)
                 size_t cbSeriesSize = pByValueSeries->GetSeriesSize() + pMT->GetBaseSize();
-                size_t cbOffset = pByValueSeries->GetSeriesOffset() - sizeof(Object);
+                size_t cbOffset = pByValueSeries->GetSeriesOffset() - sizeof(Object) + methodTableOffset;
 
                 _ASSERTE (cbOffset % sizeof(void*) == 0);
                 _ASSERTE (cbSeriesSize % sizeof(void*) == 0);
