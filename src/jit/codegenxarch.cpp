@@ -3223,7 +3223,12 @@ void CodeGen::genCodeForInitBlkRepStos(GenTreeInitBlk* initBlkNode)
     assert(!blockSize->isContained());
 
     assert(blockSize->gtSkipReloadOrCopy()->IsCnsIntOrI());
+
+	// ClassAsValue: Emit code to adjust the destination and size of initblk
+	genCodeInitBlkAdjustForReferenceType(initBlkNode);
+
     size_t size = blockSize->gtIntCon.gtIconVal;
+
     if (initVal->IsCnsIntOrI())
     {
         assert(size > INITBLK_UNROLL_LIMIT && size < INITBLK_STOS_LIMIT);
@@ -3233,6 +3238,29 @@ void CodeGen::genCodeForInitBlkRepStos(GenTreeInitBlk* initBlkNode)
 
     genConsumeBlockOp(initBlkNode, REG_RDI, REG_RAX, REG_RCX);
     instGen(INS_r_stosb);
+}
+
+void CodeGen::genCodeInitBlkAdjustForReferenceType(GenTreeInitBlk* initBlkNode)
+{
+	GenTreePtr   dstAddr = initBlkNode->Dest();
+	// ClassAsValue: Because the methodtable is already setup in codegencommon.cpp (search for ObjHeader)
+	// We are making sure that for a class, we don't clear the methodtable pointer, so we skip it here (offset+= ptr_size, size -= ptrsize)
+	if (dstAddr->gtOper == GT_LCL_VAR_ADDR)
+	{
+		LclVarDsc * varDsc = &(compiler->lvaTable[dstAddr->AsLclVar()->GetLclNum()]);
+		if (varDsc->lvType == TYP_STRUCT && varDsc->IsReferenceType())
+		{
+			emitter *emit = getEmitter();
+			size_t offset = sizeof(void*);
+
+			GenTreePtr blockSize = initBlkNode->Size();
+			size_t size = (blockSize->gtIntCon.gtIconVal -= offset);
+			if (size > 0)
+			{
+				emit->emitIns_R_I(INS_add, EA_8BYTE, dstAddr->gtRegNum, offset);
+			}
+		}
+	}
 }
 
 // Generate code for InitBlk by performing a loop unroll
@@ -3255,7 +3283,11 @@ void CodeGen::genCodeForInitBlkUnroll(GenTreeInitBlk* initBlkNode)
     assert(blockSize->IsCnsIntOrI());
 #endif // DEBUG
 
-    size_t size = blockSize->gtIntCon.gtIconVal;
+	// ClassAsValue: Emit code to adjust the destination and size of initblk
+	genCodeInitBlkAdjustForReferenceType(initBlkNode);
+
+	unsigned offset = 0;
+	size_t size = blockSize->gtIntCon.gtIconVal;
 
     assert(size <= INITBLK_UNROLL_LIMIT);
     assert(initVal->gtSkipReloadOrCopy()->IsCnsIntOrI());
@@ -3269,8 +3301,6 @@ void CodeGen::genCodeForInitBlkUnroll(GenTreeInitBlk* initBlkNode)
     // which needs to be the new register.
     regNumber valReg = initVal->gtRegNum;
     initVal = initVal->gtSkipReloadOrCopy();
-
-    unsigned offset = 0;
 
     // Perform an unroll using SSE2 loads and stores.
     if (size >= XMM_REGSIZE_BYTES)
@@ -3355,6 +3385,9 @@ void CodeGen::genCodeForInitBlk(GenTreeInitBlk* initBlkNode)
         assert(blockSize->gtIntCon.gtIconVal >= INITBLK_STOS_LIMIT);
     }
 #endif // DEBUG
+
+	// ClassAsValue: Adjust offset and size
+	genCodeInitBlkAdjustForReferenceType(initBlkNode);
 
     genConsumeBlockOp(initBlkNode, REG_ARG_0, REG_ARG_1, REG_ARG_2);
 

@@ -6582,7 +6582,16 @@ GenTreePtr          Compiler::fgMorphInitBlock(GenTreePtr tree)
 
     JITDUMP("\nfgMorphInitBlock:");
 
-    GenTreePtr oneAsgTree = fgMorphOneAsgBlockOp(tree);
+	GenTreePtr oneAsgTree = nullptr;
+	GenTreeInitBlk* initBlkOp = tree->AsInitBlk();
+	GenTreePtr    destAddr = initBlkOp->Dest();
+	GenTreePtr    initVal = initBlkOp->InitVal();
+	GenTreePtr    blockSize = initBlkOp->Size();
+	if (destAddr->gtType != TYP_REF)
+	{
+		oneAsgTree = fgMorphOneAsgBlockOp(tree);
+	}
+
     if (oneAsgTree)
     {
         JITDUMP(" using oneAsgTree.\n");
@@ -6590,15 +6599,9 @@ GenTreePtr          Compiler::fgMorphInitBlock(GenTreePtr tree)
     }
     else
     {
-        GenTreeInitBlk* initBlkOp = tree->AsInitBlk();
-
-        GenTreePtr    destAddr  = initBlkOp->Dest();
-        GenTreePtr    initVal   = initBlkOp->InitVal();
-        GenTreePtr    blockSize = initBlkOp->Size();
-
         // The dest must be an address
         noway_assert(genActualType(destAddr->gtType) == TYP_I_IMPL  ||
-               destAddr->gtType  == TYP_BYREF);
+               destAddr->gtType  == TYP_BYREF || destAddr->gtType == TYP_REF);
 
         // The size must be an integer type
         assert(varTypeIsIntegral(blockSize->gtType));

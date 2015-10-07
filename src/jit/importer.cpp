@@ -12693,8 +12693,11 @@ EVAL_APPEND:
 
             }            
 
-            op3 = gtNewIconNode(info.compCompHnd->getClassSize(resolvedToken.hClass));  // Size
-            op2 = gtNewIconNode(0);                       // Value
+			// ClassAsValue: In case of a value type, we want the full size of the class and not the size of the pointer
+			op3 = gtNewIconNode(info.compCompHnd->isValueClass(resolvedToken.hClass) ?
+				info.compCompHnd->getClassSize(resolvedToken.hClass) :
+				info.compCompHnd->getBaseSize(resolvedToken.hClass));  // Size
+			op2 = gtNewIconNode(0);                       // Value
             goto  INITBLK_OR_INITOBJ;
 
         case CEE_INITBLK:   

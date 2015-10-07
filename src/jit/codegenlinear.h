@@ -134,7 +134,9 @@
 
     void                genCodeForInitBlkRepStos (GenTreeInitBlk* initBlkNode);
 
-    void                genCodeForInitBlkUnroll  (GenTreeInitBlk* initBlkNode);
+	void                genCodeInitBlkAdjustForReferenceType(GenTreeInitBlk* initBlkNode);
+		
+	void                genCodeForInitBlkUnroll  (GenTreeInitBlk* initBlkNode);
 
     void                genJumpTable(GenTree* tree);
 
